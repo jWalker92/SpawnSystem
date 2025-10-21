@@ -1,6 +1,6 @@
 # Intelligent Spawner System
 
-The **Intelligent Spawner System** is a modular and flexible way to handle player spawn logic Battlefield 6 Portal. 
+The **Intelligent Spawner System** is a modular and flexible way to handle player spawn logic in Battlefield 6 Portal. 
 It provides team-based and distance-aware spawning with automatic tracking of explored spawn points.
 Current spawn implementations need to either spawn and despawn the player, or need the exact spawn positions of every spawn object for every map.
 
