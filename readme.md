@@ -6,6 +6,8 @@ Current spawn implementations need to either spawn and despawn the player, or ne
 
 The one is very bad UX for the player, the other one is a huge overcomplification for the portal dev.
 This system tries to be a system that automatically discovers the positions of the spawners while they are being used.
+The only thing needed to function is a list of ObjIds of the spatial spawner objects. 
+If you have multiple maps in an experience you can keep them consistent and only need to set them once!
 
 ---
 
