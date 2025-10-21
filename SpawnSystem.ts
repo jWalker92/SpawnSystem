@@ -111,7 +111,7 @@ class IntelligentSpawner {
     }
 
     private createTeamFilter(team: mod.Team | undefined): (mod.Team | undefined)[] {
-        if (this.TeamFilter && team !== undefined)
+        if (this.TeamFilter && team !== undefined && this.teams.length > 0)
             return this.teams.filter(x => !mod.Equals(team, x));
         else
             return [undefined];
