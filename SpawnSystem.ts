@@ -34,7 +34,7 @@ class IntelligentSpawner {
                 return;
             spawner.Position = mod.GetObjectPosition(spawner.SpawnerObj);
         });
-        this.spawners = this.spawners.filter(x => !x.SpawnerObj);
+        this.spawners = this.spawners.filter(x => x.SpawnerObj);
     }
 
     public AddSpawner(spawner: Spawner){
