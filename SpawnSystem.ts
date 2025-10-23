@@ -1,8 +1,8 @@
 class Spawner{
     Id: number;
     TeamId: number = -1;
+    SpawnerObj: mod.Spawner | undefined;
     Position: mod.Vector | undefined;
-    LastSpawnedPlayer: mod.Player | undefined;
 
     constructor(id: number, teamId: number = -1){
         this.Id = id;
@@ -14,7 +14,6 @@ class IntelligentSpawner {
 
     private spawners: Spawner[] = [];
     private teams: mod.Team[] = [];
-    private exploredPercentage: number = 0;
 
     public MaxDistance: number = -1;
     public MinDistance: number = -1;
@@ -29,13 +28,18 @@ class IntelligentSpawner {
 
     public SetSpawners(spawners: Spawner[]){
         this.spawners = spawners;
+        this.spawners.forEach(spawner => {
+            spawner.SpawnerObj = mod.GetSpawner(spawner.Id);
+            if (!spawner.SpawnerObj)
+                return;
+            spawner.Position = mod.GetObjectPosition(spawner.SpawnerObj);
+        });
+        this.spawners = this.spawners.filter(x => !x.SpawnerObj);
     }
 
     public AddSpawner(spawner: Spawner){
         this.spawners.push(spawner);
     }
-
-    public GetExploredPercentage(): number { return this.exploredPercentage; }
 
     public SpawnPlayer(modPlayer: mod.Player, spawnerId: number | undefined): boolean {
         if (spawnerId){
@@ -46,43 +50,25 @@ class IntelligentSpawner {
     }
 
     private spawnPlayerOnSpawner(modPlayer: mod.Player, spawnerId: number): boolean {
-        const modSpawner = mod.GetSpawner(spawnerId);
-        if (!modSpawner)
-            return false;
         const ownSpawner = this.getOwnSpawner(spawnerId);
         if (!ownSpawner){
             return false;
         }
-        ownSpawner.LastSpawnedPlayer = modPlayer;
         mod.SpawnPlayerFromSpawnPoint(modPlayer, ownSpawner.Id);
         return true;
     }
 
     private spawnPlayerOnNextSpawner(modPlayer: mod.Player): boolean {
         const filteredTeam = this.TeamFilter ? mod.GetTeam(modPlayer) : undefined;
-        const nextSpawner = this.getNextSpawner(filteredTeam);
+        const nextSpawner = this.getMostRemoteSpawner(filteredTeam);
         if (!nextSpawner)
             return false;
-        nextSpawner.LastSpawnedPlayer = modPlayer;
         mod.SpawnPlayerFromSpawnPoint(modPlayer, nextSpawner.Id);
         return true;
     }
 
     private getOwnSpawner(id: number): Spawner | undefined {
         return this.spawners.find((s) => s.Id == id);
-    }
-
-    private getOwnSpawnerWithLatestPlayer(modPlayer: mod.Player): Spawner | undefined {
-        return this.spawners.find((s) => mod.Equals(s.LastSpawnedPlayer, modPlayer));
-    }
-
-    private getNextSpawner(team: mod.Team | undefined): Spawner | undefined {
-        const unpositionedSpawner = this.spawners.find((s) => s.Position === undefined);
-        if (unpositionedSpawner){
-            return unpositionedSpawner;
-        } else {
-            return this.getMostRemoteSpawner(team);
-        }
     }
 
     private getMostRemoteSpawner(team: mod.Team | undefined): Spawner | undefined {
@@ -123,15 +109,6 @@ class IntelligentSpawner {
         else 
             return mod.ClosestPlayerTo(pos);
     }
-
-    public OnPlayerDeployedHandler(modPlayer: mod.Player){
-        const ownSpawner = this.getOwnSpawnerWithLatestPlayer(modPlayer);
-        if (!ownSpawner)
-            return;
-        const pos = mod.GetSoldierState(modPlayer, mod.SoldierStateVector.GetPosition);
-        ownSpawner.Position = pos;
-        this.exploredPercentage = this.spawners.filter(x => x.Position !== undefined).length / this.spawners.length;
-    }
 }
 
 const SpawnerListExample: Spawner[] = [
@@ -154,10 +131,6 @@ const SpawnerListExample: Spawner[] = [
 ]
 
 const SpawnSystem: IntelligentSpawner = new IntelligentSpawner();
-
-export function OnPlayerDeployed(eventPlayer: mod.Player): void {
-    SpawnSystem.OnPlayerDeployedHandler(eventPlayer);
-}
 
 // Triggered on main gamemode start/end. Useful for game start setup and cleanup.
 export async function OnGameModeStarted() {
